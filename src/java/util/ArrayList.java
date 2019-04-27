@@ -66,86 +66,79 @@ public class ArrayList<E> extends AbstractList<E>
     private static final long serialVersionUID = 8683452581122892189L;
 
     /**
-     * Default initial capacity.
+     * 默认容量
      */
     private static final int DEFAULT_CAPACITY = 10;
 
     /**
-     * Shared empty array instance used for empty instances.
+     * 空的对象数组
      */
     private static final Object[] EMPTY_ELEMENTDATA = {};
 
     /**
-     * Shared empty array instance used for default sized empty instances. We
-     * distinguish this from EMPTY_ELEMENTDATA to know how much to inflate when
-     * first element is added.
+     *  默认的空数组
+     *  无参构造函数创建的数组
      */
     private static final Object[] DEFAULTCAPACITY_EMPTY_ELEMENTDATA = {};
 
     /**
-     * The array buffer into which the elements of the ArrayList are stored.
-     * The capacity of the ArrayList is the length of this array buffer. Any
-     * empty ArrayList with elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA
-     * will be expanded to DEFAULT_CAPACITY when the first element is added.
+     *  存放数据的数组的缓存变量，transient修饰 不可序列化
      */
-    transient Object[] elementData; // non-private to simplify nested class access
+    transient Object[] elementData; // 非私有，以简化嵌套类访问
 
     /**
-     * The size of the ArrayList (the number of elements it contains).
-     *
+     * 元素数量
      * @serial
      */
     private int size;
 
     /**
-     * Constructs an empty list with the specified initial capacity.
+     *  带有容量initialCapacity的构造方法
      *
-     * @param  initialCapacity  the initial capacity of the list
-     * @throws IllegalArgumentException if the specified initial capacity
-     *         is negative
+     * @param  initialCapacity  初始容量列表的初始容量
+     * @throws IllegalArgumentException 如果指定容量为负
      */
     public ArrayList(int initialCapacity) {
         if (initialCapacity > 0) {
             this.elementData = new Object[initialCapacity];
         } else if (initialCapacity == 0) {
+            //空的对象数组
             this.elementData = EMPTY_ELEMENTDATA;
         } else {
+            //容量为负
             throw new IllegalArgumentException("Illegal Capacity: "+
                                                initialCapacity);
         }
     }
 
     /**
-     * Constructs an empty list with an initial capacity of ten.
+     * 无参构造方法
      */
     public ArrayList() {
+        //默认的空数组
         this.elementData = DEFAULTCAPACITY_EMPTY_ELEMENTDATA;
     }
 
     /**
-     * Constructs a list containing the elements of the specified
-     * collection, in the order they are returned by the collection's
-     * iterator.
-     *
-     * @param c the collection whose elements are to be placed into this list
-     * @throws NullPointerException if the specified collection is null
+     *带参数Collection的构造方法
+     * @param c 其元素将被放入此列表中的集合
+     * @throws NullPointerException 如果指定的集合是空的
      */
     public ArrayList(Collection<? extends E> c) {
         elementData = c.toArray();
         if ((size = elementData.length) != 0) {
-            // c.toArray might (incorrectly) not return Object[] (see 6260652)
+            // c.toarray可能（错误地）不返回对象[]（见JAVA BUG编号6260652）
             if (elementData.getClass() != Object[].class)
                 elementData = Arrays.copyOf(elementData, size, Object[].class);
         } else {
-            // replace with empty array.
+            // 使用空数组
             this.elementData = EMPTY_ELEMENTDATA;
         }
     }
 
     /**
-     * Trims the capacity of this <tt>ArrayList</tt> instance to be the
-     * list's current size.  An application can use this operation to minimize
-     * the storage of an <tt>ArrayList</tt> instance.
+     * 因为容量常常会大于实际元素的数量。内存紧张时，可以调用该方法删除预留的位置，调整容量为元素实际数量。
+     * 如果确定不会再有元素添加进来时也可以调用该方法来节约空间
      */
     public void trimToSize() {
         modCount++;
@@ -157,71 +150,79 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Increases the capacity of this <tt>ArrayList</tt> instance, if
-     * necessary, to ensure that it can hold at least the number of elements
-     * specified by the minimum capacity argument.
-     *
-     * @param   minCapacity   the desired minimum capacity
+     *使用指定参数设置数组容量
+     * @param   minCapacity   所需的最小容量
      */
     public void ensureCapacity(int minCapacity) {
         int minExpand = (elementData != DEFAULTCAPACITY_EMPTY_ELEMENTDATA)
-            // any size if not default element table
-            ? 0
-            // larger than default for default empty table. It's already
-            // supposed to be at default size.
-            : DEFAULT_CAPACITY;
+            // 如果数组不为空，容量预取0，否则去默认值(10)
+            ? 0 : DEFAULT_CAPACITY;
 
+        //若参数大于预设的容量，在使用该参数进一步设置数组容量
         if (minCapacity > minExpand) {
             ensureExplicitCapacity(minCapacity);
         }
     }
 
+    /**
+     *空数组时最小扩容量
+     */
     private static int calculateCapacity(Object[] elementData, int minCapacity) {
+        ////如果是个空的数组,取10和参数间大的
         if (elementData == DEFAULTCAPACITY_EMPTY_ELEMENTDATA) {
             return Math.max(DEFAULT_CAPACITY, minCapacity);
         }
         return minCapacity;
     }
 
+    /**
+     * 得到最小扩容量
+     */
     private void ensureCapacityInternal(int minCapacity) {
         ensureExplicitCapacity(calculateCapacity(elementData, minCapacity));
     }
 
+    /**
+     * 判断是否需要扩容
+     */
     private void ensureExplicitCapacity(int minCapacity) {
+        //AbstractList字段:修改次数,Fail-Fast 机制用到
         modCount++;
 
-        // overflow-conscious code
+        // 如果最小需要空间比elementData的内存空间要大，则需要扩容
         if (minCapacity - elementData.length > 0)
             grow(minCapacity);
     }
 
     /**
-     * The maximum size of array to allocate.
-     * Some VMs reserve some header words in an array.
-     * Attempts to allocate larger arrays may result in
-     * OutOfMemoryError: Requested array size exceeds VM limit
+     *  数组的最大容量，可能会导致内存溢出(VM内存限制)
      */
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
     /**
-     * Increases the capacity to ensure that it can hold at least the
-     * number of elements specified by the minimum capacity argument.
-     *
-     * @param minCapacity the desired minimum capacity
+     * 扩容，以确保它可以至少持有由参数指定的元素的数目
      */
     private void grow(int minCapacity) {
-        // overflow-conscious code
+        // 获取到ArrayList中elementData数组的内存空间长度
         int oldCapacity = elementData.length;
+        //oldCapacity >> 1：位运算，除2。扩容至原来的1.5倍
         int newCapacity = oldCapacity + (oldCapacity >> 1);
+        //和输入的比较，使用大的
         if (newCapacity - minCapacity < 0)
             newCapacity = minCapacity;
+        //若预设值大于默认的最大值检查是否溢出
         if (newCapacity - MAX_ARRAY_SIZE > 0)
             newCapacity = hugeCapacity(minCapacity);
-        // minCapacity is usually close to size, so this is a win:
+        // 调用Arrays.copyOf方法将elementData数组指向新的内存空间时newCapacity的连续空间
+        // 并将elementData的数据复制到新的内存空间
         elementData = Arrays.copyOf(elementData, newCapacity);
     }
 
+    /**
+     * 检查是否溢出，若没有溢出，返回最大整数值(java中的int为4字节，所以最大为0x7fffffff)或默认最大值
+     */
     private static int hugeCapacity(int minCapacity) {
+        //扩展数量为负数直接溢出error
         if (minCapacity < 0) // overflow
             throw new OutOfMemoryError();
         return (minCapacity > MAX_ARRAY_SIZE) ?
@@ -230,44 +231,31 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns the number of elements in this list.
-     *
-     * @return the number of elements in this list
+     * 返回ArrayList的大小
      */
     public int size() {
         return size;
     }
 
     /**
-     * Returns <tt>true</tt> if this list contains no elements.
-     *
-     * @return <tt>true</tt> if this list contains no elements
+     * 是否为空
      */
     public boolean isEmpty() {
         return size == 0;
     }
 
     /**
-     * Returns <tt>true</tt> if this list contains the specified element.
-     * More formally, returns <tt>true</tt> if and only if this list contains
-     * at least one element <tt>e</tt> such that
-     * <tt>(o==null&nbsp;?&nbsp;e==null&nbsp;:&nbsp;o.equals(e))</tt>.
-     *
-     * @param o element whose presence in this list is to be tested
-     * @return <tt>true</tt> if this list contains the specified element
+     * 是否包含某个元素
      */
     public boolean contains(Object o) {
         return indexOf(o) >= 0;
     }
 
     /**
-     * Returns the index of the first occurrence of the specified element
-     * in this list, or -1 if this list does not contain the element.
-     * More formally, returns the lowest index <tt>i</tt> such that
-     * <tt>(o==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;o.equals(get(i)))</tt>,
-     * or -1 if there is no such index.
+     * 返回第一个指定元素的值，会根据是否为null使用不同方式判断，没有返回-1
      */
     public int indexOf(Object o) {
+        //为空
         if (o == null) {
             for (int i = 0; i < size; i++)
                 if (elementData[i]==null)
@@ -281,11 +269,7 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns the index of the last occurrence of the specified element
-     * in this list, or -1 if this list does not contain the element.
-     * More formally, returns the highest index <tt>i</tt> such that
-     * <tt>(o==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;o.equals(get(i)))</tt>,
-     * or -1 if there is no such index.
+     * 返回最后一个是指定元素的位置，会根据是否为null使用不同方式判断，没有返回-1
      */
     public int lastIndexOf(Object o) {
         if (o == null) {
@@ -301,14 +285,13 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns a shallow copy of this <tt>ArrayList</tt> instance.  (The
-     * elements themselves are not copied.)
-     *
-     * @return a clone of this <tt>ArrayList</tt> instance
+     *返回副本，元素本身没有被复制，复制过程数组发生改变会抛出异常
      */
     public Object clone() {
         try {
+            // 调用父类(翻看源码可见是Object类)的clone方法得到一个ArrayList副本
             ArrayList<?> v = (ArrayList<?>) super.clone();
+            // 调用Arrays类的copyOf，将ArrayList的elementData数组赋值给副本的elementData数组
             v.elementData = Arrays.copyOf(elementData, size);
             v.modCount = 0;
             return v;
@@ -319,55 +302,31 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns an array containing all of the elements in this list
-     * in proper sequence (from first to last element).
-     *
-     * <p>The returned array will be "safe" in that no references to it are
-     * maintained by this list.  (In other words, this method must allocate
-     * a new array).  The caller is thus free to modify the returned array.
-     *
-     * <p>This method acts as bridge between array-based and collection-based
-     * APIs.
-     *
-     * @return an array containing all of the elements in this list in
-     *         proper sequence
+     * 转换为Object数组，使用Arrays.copyOf()方法
      */
     public Object[] toArray() {
         return Arrays.copyOf(elementData, size);
     }
 
     /**
-     * Returns an array containing all of the elements in this list in proper
-     * sequence (from first to last element); the runtime type of the returned
-     * array is that of the specified array.  If the list fits in the
-     * specified array, it is returned therein.  Otherwise, a new array is
-     * allocated with the runtime type of the specified array and the size of
-     * this list.
+     * 将ArrayList里面的元素赋值到一个数组中去
+     * 如果a的长度小于ArrayList的长度，直接调用Arrays类的copyOf，返回一个比a数组长度要大的新数组，里面元素就是ArrayList里面的元素；
+     * 如果a的长度比ArrayList的长度大，那么就调用System.arraycopy，将ArrayList的elementData数组赋值到a数组，然后把a数组的size位置赋值为空。
      *
-     * <p>If the list fits in the specified array with room to spare
-     * (i.e., the array has more elements than the list), the element in
-     * the array immediately following the end of the collection is set to
-     * <tt>null</tt>.  (This is useful in determining the length of the
-     * list <i>only</i> if the caller knows that the list does not contain
-     * any null elements.)
-     *
-     * @param a the array into which the elements of the list are to
-     *          be stored, if it is big enough; otherwise, a new array of the
-     *          same runtime type is allocated for this purpose.
-     * @return an array containing the elements of the list
-     * @throws ArrayStoreException if the runtime type of the specified array
-     *         is not a supertype of the runtime type of every element in
-     *         this list
-     * @throws NullPointerException if the specified array is null
+     * @param a 如果它的长度大的话，列表元素将存储在这个数组中; 否则，将为此分配一个相同运行时类型的新数组。
+     * @return 一个包含ArrayList元素的数组
+     * @throws ArrayStoreException  将与数组类型不兼容的值赋值给数组元素时抛出的异常
+     * @throws NullPointerException 数组为空
      */
     @SuppressWarnings("unchecked")
     public <T> T[] toArray(T[] a) {
         if (a.length < size)
-            // Make a new array of a's runtime type, but my contents:
+            // 创建一个新的a的运行时类型数组，内容不变
             return (T[]) Arrays.copyOf(elementData, size, a.getClass());
+        // 如果a能装下list中的数据就复制到a里面
         System.arraycopy(elementData, 0, a, 0, size);
         if (a.length > size)
-            a[size] = null;
+            a[size] = null;//这一步的作用还是促进GC
         return a;
     }
 
