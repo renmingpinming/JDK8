@@ -191,6 +191,7 @@ public class ArrayList<E> extends AbstractList<E>
 
         // 如果最小需要空间比elementData的内存空间要大，则需要扩容
         if (minCapacity - elementData.length > 0)
+            //扩容
             grow(minCapacity);
     }
 
@@ -338,22 +339,20 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns the element at the specified position in this list.
-     *
+     *返回下标值
      * @param  index index of the element to return
      * @return the element at the specified position in this list
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public E get(int index) {
+        //检查下标与数组的长度
         rangeCheck(index);
 
         return elementData(index);
     }
 
     /**
-     * Replaces the element at the specified position in this list with
-     * the specified element.
-     *
+     * 替代index元素为新元素，返回旧元素
      * @param index index of the element to replace
      * @param element element to be stored at the specified position
      * @return the element previously at the specified position
@@ -368,30 +367,29 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Appends the specified element to the end of this list.
-     *
+     *在最后添加元素
      * @param e element to be appended to this list
      * @return <tt>true</tt> (as specified by {@link Collection#add})
      */
     public boolean add(E e) {
+        //是否扩容
         ensureCapacityInternal(size + 1);  // Increments modCount!!
         elementData[size++] = e;
         return true;
     }
 
     /**
-     * Inserts the specified element at the specified position in this
-     * list. Shifts the element currently at that position (if any) and
-     * any subsequent elements to the right (adds one to their indices).
-     *
+     * 特定位置插入元素
      * @param index index at which the specified element is to be inserted
      * @param element element to be inserted
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public void add(int index, E element) {
         rangeCheckForAdd(index);
-
+        //是否扩容
         ensureCapacityInternal(size + 1);  // Increments modCount!!
+        //src:源数组；	srcPos:源数组要复制的起始位置；
+        //dest:目的数组；	destPos:目的数组放置的起始位置；	length:复制的长度。
         System.arraycopy(elementData, index, elementData, index + 1,
                          size - index);
         elementData[index] = element;
@@ -573,7 +571,7 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * A version of rangeCheck used by add and addAll.
+     * 添加范围判断
      */
     private void rangeCheckForAdd(int index) {
         if (index > size || index < 0)
