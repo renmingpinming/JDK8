@@ -339,9 +339,9 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     *返回下标值
-     * @param  index index of the element to return
-     * @return the element at the specified position in this list
+     *返回下标值，但是会先检查这个位置数否超出数组长度
+     * @param  index 索引
+     * @return list中指定位置的元素
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public E get(int index) {
@@ -353,9 +353,9 @@ public class ArrayList<E> extends AbstractList<E>
 
     /**
      * 替代index元素为新元素，返回旧元素
-     * @param index index of the element to replace
-     * @param element element to be stored at the specified position
-     * @return the element previously at the specified position
+     * @param index 要替换的元素索引
+     * @param element 要存储在指定位置的元素
+     * @return 之前在指定位置的元素
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public E set(int index, E element) {
@@ -368,7 +368,7 @@ public class ArrayList<E> extends AbstractList<E>
 
     /**
      *在最后添加元素
-     * @param e element to be appended to this list
+     * @param e 要添加到此列表中的元素
      * @return <tt>true</tt> (as specified by {@link Collection#add})
      */
     public boolean add(E e) {
@@ -380,8 +380,8 @@ public class ArrayList<E> extends AbstractList<E>
 
     /**
      * 特定位置插入元素
-     * @param index index at which the specified element is to be inserted
-     * @param element element to be inserted
+     * @param index 指定元素将被插入的索引
+     * @param 要插入的元素
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public void add(int index, E element) {
