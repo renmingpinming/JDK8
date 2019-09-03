@@ -386,7 +386,7 @@ public class ArrayList<E> extends AbstractList<E>
     /**
      * 特定位置插入元素
      * @param index 指定元素将被插入的索引
-     * @param 要插入的元素
+     * @param element 要插入的元素
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public void add(int index, E element) {
@@ -703,7 +703,7 @@ public class ArrayList<E> extends AbstractList<E>
             ensureCapacityInternal(size);
 
             Object[] a = elementData;
-            // Read in all elements in the proper order.
+            // 按正确的顺序读入所有元素。
             for (int i=0; i<size; i++) {
                 a[i] = s.readObject();
             }
@@ -711,29 +711,20 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns a list iterator over the elements in this list (in proper
-     * sequence), starting at the specified position in the list.
-     * The specified index indicates the first element that would be
-     * returned by an initial call to {@link ListIterator#next next}.
-     * An initial call to {@link ListIterator#previous previous} would
-     * return the element with the specified index minus one.
-     *
+     *返回一个从index开始的ListIterator(列表迭代器)对象
      * <p>The returned list iterator is <a href="#fail-fast"><i>fail-fast</i></a>.
-     *
+     *fail-fast机制
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public ListIterator<E> listIterator(int index) {
         if (index < 0 || index > size)
             throw new IndexOutOfBoundsException("Index: "+index);
+        //ListIterator迭代器
         return new ListItr(index);
     }
 
     /**
-     * Returns a list iterator over the elements in this list (in proper
-     * sequence).
-     *
-     * <p>The returned list iterator is <a href="#fail-fast"><i>fail-fast</i></a>.
-     *
+     *返回一个ListIterator对象，ListItr为ArrayList的一个内部类，其实现了ListIterator<E> 接口
      * @see #listIterator(int)
      */
     public ListIterator<E> listIterator() {
@@ -741,10 +732,7 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Returns an iterator over the elements in this list in proper sequence.
-     *
-     * <p>The returned iterator is <a href="#fail-fast"><i>fail-fast</i></a>.
-     *
+     *返回一个Iterator对象，Itr为ArrayList的一个内部类，其实现了Iterator<E>接口
      * @return an iterator over the elements in this list in proper sequence
      */
     public Iterator<E> iterator() {
@@ -752,21 +740,24 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * An optimized version of AbstractList.Itr
+     * 通用的迭代器实现
      */
     private class Itr implements Iterator<E> {
-        int cursor;       // index of next element to return
-        int lastRet = -1; // index of last element returned; -1 if no such
+        int cursor;       // 游标，下一个元素的索引，默认初始化为0
+        int lastRet = -1; // 上次访问的元素的位置; -1 表示没有
         int expectedModCount = modCount;
 
         Itr() {}
 
+        //是否有下一个,游标不等于数组大小
         public boolean hasNext() {
             return cursor != size;
         }
 
+        //返回下一个元素
         @SuppressWarnings("unchecked")
         public E next() {
+            //fail-fast机制
             checkForComodification();
             int i = cursor;
             if (i >= size)
@@ -774,28 +765,39 @@ public class ArrayList<E> extends AbstractList<E>
             Object[] elementData = ArrayList.this.elementData;
             if (i >= elementData.length)
                 throw new ConcurrentModificationException();
+            //游标+1
             cursor = i + 1;
+            //返回下一个元素,lastRet记录
             return (E) elementData[lastRet = i];
         }
 
+        //删除元素
         public void remove() {
+            //-1不能删除
             if (lastRet < 0)
                 throw new IllegalStateException();
+            //fail-fast机制
             checkForComodification();
 
             try {
+                //掉用remove方法删除索引为lastRet的元素
                 ArrayList.this.remove(lastRet);
+                //数组整体前移了,游标从上次访问的地方继续
                 cursor = lastRet;
                 lastRet = -1;
+                //fail-fast机制
                 expectedModCount = modCount;
             } catch (IndexOutOfBoundsException ex) {
                 throw new ConcurrentModificationException();
             }
         }
 
+        //能够将Iterator中迭代剩余的元素传递给一个函数
+        //forEachRemaining()使用迭代器Iterator的所有元素，并且第二次调用它将不会做任何事情，因为不再有下一个元素。
         @Override
         @SuppressWarnings("unchecked")
         public void forEachRemaining(Consumer<? super E> consumer) {
+            //consumer不为空
             Objects.requireNonNull(consumer);
             final int size = ArrayList.this.size;
             int i = cursor;
@@ -807,14 +809,18 @@ public class ArrayList<E> extends AbstractList<E>
                 throw new ConcurrentModificationException();
             }
             while (i != size && modCount == expectedModCount) {
+                //对给定的参数执行此操作
                 consumer.accept((E) elementData[i++]);
             }
-            // update once at end of iteration to reduce heap write traffic
+            // 把i赋回游标和上次访问的元素的位置
+            //在迭代结束时更新一次以减少堆写入流量
             cursor = i;
             lastRet = i - 1;
+            //fail-fast机制
             checkForComodification();
         }
 
+        //fail-fast机制,迭代期间不能有修改
         final void checkForComodification() {
             if (modCount != expectedModCount)
                 throw new ConcurrentModificationException();
@@ -822,39 +828,47 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * An optimized version of AbstractList.ListItr
+     * ListIterator迭代器实现,继承通用迭代器
      */
     private class ListItr extends Itr implements ListIterator<E> {
+        //初始化,游标赋值
         ListItr(int index) {
             super();
             cursor = index;
         }
 
+        //是否有前一个
         public boolean hasPrevious() {
             return cursor != 0;
         }
-
+        //下一个元素的索引
         public int nextIndex() {
             return cursor;
         }
-
+        //前一个元素的索引
         public int previousIndex() {
             return cursor - 1;
         }
 
+        //获取前一个元素
         @SuppressWarnings("unchecked")
         public E previous() {
+            //fail-fast机制
             checkForComodification();
+            //游标-1
             int i = cursor - 1;
             if (i < 0)
                 throw new NoSuchElementException();
             Object[] elementData = ArrayList.this.elementData;
             if (i >= elementData.length)
                 throw new ConcurrentModificationException();
+            //游标赋值
             cursor = i;
+            //返回元素值,记录上次访问的元素的位置
             return (E) elementData[lastRet = i];
         }
 
+        //替换当前值
         public void set(E e) {
             if (lastRet < 0)
                 throw new IllegalStateException();
@@ -867,6 +881,7 @@ public class ArrayList<E> extends AbstractList<E>
             }
         }
 
+        //当前位置插入
         public void add(E e) {
             checkForComodification();
 
