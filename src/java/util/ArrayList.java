@@ -682,23 +682,24 @@ public class ArrayList<E> extends AbstractList<E>
     }
 
     /**
-     * Reconstitute the <tt>ArrayList</tt> instance from a stream (that is,
-     * deserialize it).
+     * 从流中重构ArrayList实例（即反序列化）。
      */
     private void readObject(java.io.ObjectInputStream s)
         throws java.io.IOException, ClassNotFoundException {
+        // 声明为空数组
         elementData = EMPTY_ELEMENTDATA;
 
-        // Read in size, and any hidden stuff
+        //执行默认的反序列化/序列化过程
         s.defaultReadObject();
 
-        // Read in capacity
+        // 读入数组长度  没什么用，只是因为写出的时候写了size属性，读的时候也要按顺序来读
         s.readInt(); // ignored
 
         if (size > 0) {
-            // be like clone(), allocate array based upon size not capacity
+            // 空数组时最小扩容量
             int capacity = calculateCapacity(elementData, size);
             SharedSecrets.getJavaOISAccess().checkArray(s, Object[].class, capacity);
+            // 检查是否需要扩容
             ensureCapacityInternal(size);
 
             Object[] a = elementData;
