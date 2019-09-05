@@ -1301,12 +1301,17 @@ public class ArrayList<E> extends AbstractList<E>
         }
     }
 
+    /**
+     * 按照一定规则过滤集合中的元素
+     * @param filter
+     * @return
+     */
     @Override
     public boolean removeIf(Predicate<? super E> filter) {
         Objects.requireNonNull(filter);
-        // figure out which elements are to be removed
-        // any exception thrown from the filter predicate at this stage
-        // will leave the collection unmodified
+        // 找出要删除的元素
+        // 在此阶段从过滤谓词抛出的任何异常
+        // 将保持集合不被修改
         int removeCount = 0;
         final BitSet removeSet = new BitSet(size);
         final int expectedModCount = modCount;
@@ -1314,6 +1319,7 @@ public class ArrayList<E> extends AbstractList<E>
         for (int i=0; modCount == expectedModCount && i < size; i++) {
             @SuppressWarnings("unchecked")
             final E element = (E) elementData[i];
+            //满足filter的
             if (filter.test(element)) {
                 removeSet.set(i);
                 removeCount++;
