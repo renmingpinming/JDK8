@@ -794,6 +794,7 @@ public class ArrayList<E> extends AbstractList<E>
 
         //能够将Iterator中迭代剩余的元素传递给一个函数
         //forEachRemaining()使用迭代器Iterator的所有元素，并且第二次调用它将不会做任何事情，因为不再有下一个元素。
+        //Consumer 函数式接口
         @Override
         @SuppressWarnings("unchecked")
         public void forEachRemaining(Consumer<? super E> consumer) {
@@ -809,7 +810,7 @@ public class ArrayList<E> extends AbstractList<E>
                 throw new ConcurrentModificationException();
             }
             while (i != size && modCount == expectedModCount) {
-                //对给定的参数执行此操作
+                //对给定的参数执行此操作  accept()接受并改变某个对象的内部值
                 consumer.accept((E) elementData[i++]);
             }
             // 把i赋回游标和上次访问的元素的位置
@@ -1303,6 +1304,7 @@ public class ArrayList<E> extends AbstractList<E>
 
     /**
      * 按照一定规则过滤集合中的元素
+     * Predicate是一个函数式接口，可以被应用于lambda表达式和方法引用
      * @param filter
      * @return
      */
@@ -1319,7 +1321,7 @@ public class ArrayList<E> extends AbstractList<E>
         for (int i=0; modCount == expectedModCount && i < size; i++) {
             @SuppressWarnings("unchecked")
             final E element = (E) elementData[i];
-            //满足filter的
+            //满足filter的 test()方法进行某些逻辑判断并返回一个boolean值
             if (filter.test(element)) {
                 removeSet.set(i);
                 removeCount++;
@@ -1334,6 +1336,7 @@ public class ArrayList<E> extends AbstractList<E>
         if (anyToRemove) {
             final int newSize = size - removeCount;
             for (int i=0, j=0; (i < size) && (j < newSize); i++, j++) {
+                //第一个索引,发生在指定的起始索引之上或之后。i或者i之后
                 i = removeSet.nextClearBit(i);
                 elementData[j] = elementData[i];
             }
@@ -1350,6 +1353,9 @@ public class ArrayList<E> extends AbstractList<E>
         return anyToRemove;
     }
 
+    //全部替换
+    //UnaryOperator接口表示一个操作，它接受一个参数并返回与其输入参数相同类型的结果
+    //单元算子,算子就是一个针对同类型输入输出的一个映射
     @Override
     @SuppressWarnings("unchecked")
     public void replaceAll(UnaryOperator<E> operator) {
@@ -1365,6 +1371,7 @@ public class ArrayList<E> extends AbstractList<E>
         modCount++;
     }
 
+    //排序
     @Override
     @SuppressWarnings("unchecked")
     public void sort(Comparator<? super E> c) {
