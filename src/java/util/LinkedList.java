@@ -787,7 +787,7 @@ public class LinkedList<E>
     }
 
     /**
-     *  迭代器 从指定位置开始 快速失败
+     *  双向遍历迭代器 从指定位置开始 快速失败
      * @param index index of the first element to be returned from the
      *              list-iterator (by a call to {@code next})
      * @return a ListIterator of the elements in this list (in proper
@@ -940,7 +940,7 @@ public class LinkedList<E>
     }
 
     /**
-     * Adapter to provide descending iterators via ListItr.previous
+     * 返回逆序的迭代器对象
      */
     private class DescendingIterator implements Iterator<E> {
         private final ListItr itr = new ListItr(size());
@@ -966,9 +966,7 @@ public class LinkedList<E>
     }
 
     /**
-     * Returns a shallow copy of this {@code LinkedList}. (The elements
-     * themselves are not cloned.)
-     * 拷贝
+     * 返回一个链表的拷贝，返回值为Object 类型
      * @return a shallow copy of this {@code LinkedList} instance
      */
     public Object clone() {
@@ -987,15 +985,6 @@ public class LinkedList<E>
     }
 
     /**
-     * Returns an array containing all of the elements in this list
-     * in proper sequence (from first to last element).
-     *
-     * <p>The returned array will be "safe" in that no references to it are
-     * maintained by this list.  (In other words, this method must allocate
-     * a new array).  The caller is thus free to modify the returned array.
-     *
-     * <p>This method acts as bridge between array-based and collection-based
-     * APIs.
      * 转换成数组,从头到尾
      * @return an array containing all of the elements in this list
      *         in proper sequence
@@ -1009,34 +998,7 @@ public class LinkedList<E>
     }
 
     /**
-     * Returns an array containing all of the elements in this list in
-     * proper sequence (from first to last element); the runtime type of
-     * the returned array is that of the specified array.  If the list fits
-     * in the specified array, it is returned therein.  Otherwise, a new
-     * array is allocated with the runtime type of the specified array and
-     * the size of this list.
-     *
-     * <p>If the list fits in the specified array with room to spare (i.e.,
-     * the array has more elements than the list), the element in the array
-     * immediately following the end of the list is set to {@code null}.
-     * (This is useful in determining the length of the list <i>only</i> if
-     * the caller knows that the list does not contain any null elements.)
-     *
-     * <p>Like the {@link #toArray()} method, this method acts as bridge between
-     * array-based and collection-based APIs.  Further, this method allows
-     * precise control over the runtime type of the output array, and may,
-     * under certain circumstances, be used to save allocation costs.
-     *
-     * <p>Suppose {@code x} is a list known to contain only strings.
-     * The following code can be used to dump the list into a newly
-     * allocated array of {@code String}:
-     *
-     * <pre>
-     *     String[] y = x.toArray(new String[0]);</pre>
-     *
-     * Note that {@code toArray(new Object[0])} is identical in function to
-     * {@code toArray()}.
-     *
+     * 返回LinkedList的模板数组。所谓模板数组，即可以将T设为任意的数据类型
      * @param a the array into which the elements of the list are to
      *          be stored, if it is big enough; otherwise, a new array of the
      *          same runtime type is allocated for this purpose.
@@ -1048,9 +1010,11 @@ public class LinkedList<E>
      */
     @SuppressWarnings("unchecked")
     public <T> T[] toArray(T[] a) {
+        //数组长度不够,则新建一个T[]数组，T[]的大小为LinkedList大小，并将该T[]赋值给a。
         if (a.length < size)
             a = (T[])java.lang.reflect.Array.newInstance(
                                 a.getClass().getComponentType(), size);
+        //将链表中所有节点的数据都添加到数组a中
         int i = 0;
         Object[] result = a;
         for (Node<E> x = first; x != null; x = x.next)
@@ -1102,18 +1066,7 @@ public class LinkedList<E>
     }
 
     /**
-     * Creates a <em><a href="Spliterator.html#binding">late-binding</a></em>
-     * and <em>fail-fast</em> {@link Spliterator} over the elements in this
-     * list.
-     *
-     * <p>The {@code Spliterator} reports {@link Spliterator#SIZED} and
-     * {@link Spliterator#ORDERED}.  Overriding implementations should document
-     * the reporting of additional characteristic values.
-     *
-     * @implNote
-     * The {@code Spliterator} additionally reports {@link Spliterator#SUBSIZED}
-     * and implements {@code trySplit} to permit limited parallelism..
-     * 可分割迭代器
+     * 可分割迭代器,Spliterator可以拆分成多份去遍历,有点像二分法,每次把某个Spliterator平均分成两份,但是改的只是下标
      * @return a {@code Spliterator} over the elements in this list
      * @since 1.8
      */
