@@ -33,150 +33,60 @@ import java.util.function.BiFunction;
 import sun.misc.SharedSecrets;
 
 /**
- * This class implements a hash table, which maps keys to values. Any
- * non-<code>null</code> object can be used as a key or as a value. <p>
- *
- * To successfully store and retrieve objects from a hashtable, the
- * objects used as keys must implement the <code>hashCode</code>
- * method and the <code>equals</code> method. <p>
- *
- * An instance of <code>Hashtable</code> has two parameters that affect its
- * performance: <i>initial capacity</i> and <i>load factor</i>.  The
- * <i>capacity</i> is the number of <i>buckets</i> in the hash table, and the
- * <i>initial capacity</i> is simply the capacity at the time the hash table
- * is created.  Note that the hash table is <i>open</i>: in the case of a "hash
- * collision", a single bucket stores multiple entries, which must be searched
- * sequentially.  The <i>load factor</i> is a measure of how full the hash
- * table is allowed to get before its capacity is automatically increased.
- * The initial capacity and load factor parameters are merely hints to
- * the implementation.  The exact details as to when and whether the rehash
- * method is invoked are implementation-dependent.<p>
- *
- * Generally, the default load factor (.75) offers a good tradeoff between
- * time and space costs.  Higher values decrease the space overhead but
- * increase the time cost to look up an entry (which is reflected in most
- * <tt>Hashtable</tt> operations, including <tt>get</tt> and <tt>put</tt>).<p>
- *
- * The initial capacity controls a tradeoff between wasted space and the
- * need for <code>rehash</code> operations, which are time-consuming.
- * No <code>rehash</code> operations will <i>ever</i> occur if the initial
- * capacity is greater than the maximum number of entries the
- * <tt>Hashtable</tt> will contain divided by its load factor.  However,
- * setting the initial capacity too high can waste space.<p>
- *
- * If many entries are to be made into a <code>Hashtable</code>,
- * creating it with a sufficiently large capacity may allow the
- * entries to be inserted more efficiently than letting it perform
- * automatic rehashing as needed to grow the table. <p>
- *
- * This example creates a hashtable of numbers. It uses the names of
- * the numbers as keys:
- * <pre>   {@code
- *   Hashtable<String, Integer> numbers
- *     = new Hashtable<String, Integer>();
- *   numbers.put("one", 1);
- *   numbers.put("two", 2);
- *   numbers.put("three", 3);}</pre>
- *
- * <p>To retrieve a number, use the following code:
- * <pre>   {@code
- *   Integer n = numbers.get("two");
- *   if (n != null) {
- *     System.out.println("two = " + n);
- *   }}</pre>
- *
- * <p>The iterators returned by the <tt>iterator</tt> method of the collections
- * returned by all of this class's "collection view methods" are
- * <em>fail-fast</em>: if the Hashtable is structurally modified at any time
- * after the iterator is created, in any way except through the iterator's own
- * <tt>remove</tt> method, the iterator will throw a {@link
- * ConcurrentModificationException}.  Thus, in the face of concurrent
- * modification, the iterator fails quickly and cleanly, rather than risking
- * arbitrary, non-deterministic behavior at an undetermined time in the future.
- * The Enumerations returned by Hashtable's keys and elements methods are
- * <em>not</em> fail-fast.
- *
- * <p>Note that the fail-fast behavior of an iterator cannot be guaranteed
- * as it is, generally speaking, impossible to make any hard guarantees in the
- * presence of unsynchronized concurrent modification.  Fail-fast iterators
- * throw <tt>ConcurrentModificationException</tt> on a best-effort basis.
- * Therefore, it would be wrong to write a program that depended on this
- * exception for its correctness: <i>the fail-fast behavior of iterators
- * should be used only to detect bugs.</i>
- *
- * <p>As of the Java 2 platform v1.2, this class was retrofitted to
- * implement the {@link Map} interface, making it a member of the
- * <a href="{@docRoot}/../technotes/guides/collections/index.html">
- *
- * Java Collections Framework</a>.  Unlike the new collection
- * implementations, {@code Hashtable} is synchronized.  If a
- * thread-safe implementation is not needed, it is recommended to use
- * {@link HashMap} in place of {@code Hashtable}.  If a thread-safe
- * highly-concurrent implementation is desired, then it is recommended
- * to use {@link java.util.concurrent.ConcurrentHashMap} in place of
- * {@code Hashtable}.
- *
- * @author  Arthur van Hoff
- * @author  Josh Bloch
- * @author  Neal Gafter
- * @see     Object#equals(Object)
- * @see     Object#hashCode()
- * @see     Hashtable#rehash()
- * @see     Collection
- * @see     Map
- * @see     HashMap
- * @see     TreeMap
- * @since JDK1.0
+ * Hashtable存储的内容是键值对(key-value)映射，其底层实现是一个Entry数组+链表；
+ * Hashtable和HashMap一样也是散列表，存储元素也是键值对；
+ * HashMap允许key和value都为null，而Hashtable都不能为null，Hashtable中的映射不是有序的；
+ * Hashtable和HashMap扩容的方法不一样，Hashtable中数组默认大小11，扩容方式是 old*2+1。
+ * HashMap中数组的默认大小是16，而且一定是2的指数，增加为原来的2倍。
+ * Hashtable继承于Dictionary类（Dictionary类声明了操作键值对的接口方法），实现Map接口（定义键值对接口）；
+ * Hashtable大部分类用synchronized修饰，证明Hashtable是线程安全的。
  */
 public class Hashtable<K,V>
     extends Dictionary<K,V>
     implements Map<K,V>, Cloneable, Serializable {
 
     /**
-     * The hash table data.
+     * 键值对/Entry数组，每个Entry本质上是一个单向链表的表头
      */
     private transient Entry<?,?>[] table;
 
     /**
-     * The total number of entries in the hash table.
+     * 当前表中的Entry数量，如果超过了阈值，就会扩容，即调用rehash方法
      */
     private transient int count;
 
     /**
-     * The table is rehashed when its size exceeds this threshold.  (The
-     * value of this field is (int)(capacity * loadFactor).)
-     *
+     * rehash阈值
      * @serial
      */
     private int threshold;
 
     /**
-     * The load factor for the hashtable.
+     * 负载因子
      *
      * @serial
      */
     private float loadFactor;
 
     /**
-     * The number of times this Hashtable has been structurally modified
-     * Structural modifications are those that change the number of entries in
-     * the Hashtable or otherwise modify its internal structure (e.g.,
-     * rehash).  This field is used to make iterators on Collection-views of
-     * the Hashtable fail-fast.  (See ConcurrentModificationException).
+     * 用来实现"fail-fast"机制的（也就是快速失败）。所谓快速失败就是在并发集合中，其进行
+     * 迭代操作时，若有其他线程对其进行结构性的修改，这时迭代器会立马感知到，并且立即抛出
+     * ConcurrentModificationException异常，而不是等到迭代完成之后才告诉你（你已经出错了）。
      */
     private transient int modCount = 0;
 
-    /** use serialVersionUID from JDK 1.0.2 for interoperability */
+    /**
+     * 版本序列号
+     */
     private static final long serialVersionUID = 1421746759512286392L;
 
     /**
-     * Constructs a new, empty hashtable with the specified initial
-     * capacity and the specified load factor.
+     * 指定容量大小和加载因子的构造函数
      *
-     * @param      initialCapacity   the initial capacity of the hashtable.
-     * @param      loadFactor        the load factor of the hashtable.
-     * @exception  IllegalArgumentException  if the initial capacity is less
-     *             than zero, or if the load factor is nonpositive.
+     * @param initialCapacity 容量大小
+     * @param loadFactor      负载因子
+     * @throws IllegalArgumentException if the initial capacity is less
+     *                                  than zero, or if the load factor is nonpositive.
      */
     public Hashtable(int initialCapacity, float loadFactor) {
         if (initialCapacity < 0)
@@ -193,8 +103,7 @@ public class Hashtable<K,V>
     }
 
     /**
-     * Constructs a new, empty hashtable with the specified initial capacity
-     * and default load factor (0.75).
+     * 指定容量大小的构造函数
      *
      * @param     initialCapacity   the initial capacity of the hashtable.
      * @exception IllegalArgumentException if the initial capacity is less
@@ -205,17 +114,14 @@ public class Hashtable<K,V>
     }
 
     /**
-     * Constructs a new, empty hashtable with a default initial capacity (11)
-     * and load factor (0.75).
+     * 默认构造函数,指定的容量大小是11；负载因子是0.75
      */
     public Hashtable() {
         this(11, 0.75f);
     }
 
     /**
-     * Constructs a new hashtable with the same mappings as the given
-     * Map.  The hashtable is created with an initial capacity sufficient to
-     * hold the mappings in the given Map and a default load factor (0.75).
+     * 包含子Map的构造函数
      *
      * @param t the map whose mappings are to be placed in this map.
      * @throws NullPointerException if the specified map is null.
@@ -227,7 +133,7 @@ public class Hashtable<K,V>
     }
 
     /**
-     * Returns the number of keys in this hashtable.
+     * 返回容量大小
      *
      * @return  the number of keys in this hashtable.
      */
@@ -236,7 +142,7 @@ public class Hashtable<K,V>
     }
 
     /**
-     * Tests if this hashtable maps no keys to values.
+     * 判空
      *
      * @return  <code>true</code> if this hashtable maps no keys to values;
      *          <code>false</code> otherwise.
@@ -246,7 +152,7 @@ public class Hashtable<K,V>
     }
 
     /**
-     * Returns an enumeration of the keys in this hashtable.
+     * 返回所有key的枚举对象
      *
      * @return  an enumeration of the keys in this hashtable.
      * @see     Enumeration
@@ -259,9 +165,7 @@ public class Hashtable<K,V>
     }
 
     /**
-     * Returns an enumeration of the values in this hashtable.
-     * Use the Enumeration methods on the returned object to fetch the elements
-     * sequentially.
+     * 返回所有value的枚举对象
      *
      * @return  an enumeration of the values in this hashtable.
      * @see     Enumeration
@@ -274,9 +178,7 @@ public class Hashtable<K,V>
     }
 
     /**
-     * Tests if some key maps into the specified value in this hashtable.
-     * This operation is more expensive than the {@link #containsKey
-     * containsKey} method.
+     * 判断是否含有该value的键值对，在Hashtable中hashCode相同的Entry用链表组织，hashCode不同的存储在Entry数组table中；
      *
      * <p>Note that this method is identical in functionality to
      * {@link #containsValue containsValue}, (which is part of the
@@ -306,7 +208,7 @@ public class Hashtable<K,V>
     }
 
     /**
-     * Returns true if this hashtable maps one or more keys to this value.
+     * 判断是否包含value值对象
      *
      * <p>Note that this method is identical in functionality to {@link
      * #contains contains} (which predates the {@link Map} interface).
@@ -322,7 +224,7 @@ public class Hashtable<K,V>
     }
 
     /**
-     * Tests if the specified object is a key in this hashtable.
+     * 判断是否包含key键值对象
      *
      * @param   key   possible key
      * @return  <code>true</code> if and only if the specified object
@@ -334,6 +236,10 @@ public class Hashtable<K,V>
     public synchronized boolean containsKey(Object key) {
         Entry<?,?> tab[] = table;
         int hash = key.hashCode();
+        /**
+         * 计算index, % tab.length防止数组越界
+         * index表示key对应entry所在链表表头
+         */
         int index = (hash & 0x7FFFFFFF) % tab.length;
         for (Entry<?,?> e = tab[index] ; e != null ; e = e.next) {
             if ((e.hash == hash) && e.key.equals(key)) {
@@ -344,13 +250,7 @@ public class Hashtable<K,V>
     }
 
     /**
-     * Returns the value to which the specified key is mapped,
-     * or {@code null} if this map contains no mapping for the key.
-     *
-     * <p>More formally, if this map contains a mapping from a key
-     * {@code k} to a value {@code v} such that {@code (key.equals(k))},
-     * then this method returns {@code v}; otherwise it returns
-     * {@code null}.  (There can be at most one such mapping.)
+     * 根据指定key查找对应value，查找原理与containsKey相同，查找成功返回value，否则返回null
      *
      * @param key the key whose associated value is to be returned
      * @return the value to which the specified key is mapped, or
@@ -372,26 +272,23 @@ public class Hashtable<K,V>
     }
 
     /**
-     * The maximum size of array to allocate.
-     * Some VMs reserve some header words in an array.
-     * Attempts to allocate larger arrays may result in
-     * OutOfMemoryError: Requested array size exceeds VM limit
+     * 规定的最大数组容量
      */
     private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
     /**
-     * Increases the capacity of and internally reorganizes this
-     * hashtable, in order to accommodate and access its entries more
-     * efficiently.  This method is called automatically when the
-     * number of keys in the hashtable exceeds this hashtable's capacity
-     * and load factor.
+     * 当Hashtable中键值对总数超过阈值（容量*装载因子）后，内部自动调用rehash()增加容量，重新计算每个键值对的hashCode
+     * int newCapacity = (oldCapacity << 1) + 1计算新容量 = 2 * 旧容量 + 1；并且根据新容量更新阈值
      */
     @SuppressWarnings("unchecked")
     protected void rehash() {
         int oldCapacity = table.length;
         Entry<?,?>[] oldMap = table;
 
-        // overflow-conscious code
+        /**
+         * 新的大小为  原大小 * 2 + 1
+         * 虽然不保证capacity是一个质数，但至少保证它是一个奇数
+         */
         int newCapacity = (oldCapacity << 1) + 1;
         if (newCapacity - MAX_ARRAY_SIZE > 0) {
             if (oldCapacity == MAX_ARRAY_SIZE)
@@ -404,19 +301,24 @@ public class Hashtable<K,V>
         modCount++;
         threshold = (int)Math.min(newCapacity * loadFactor, MAX_ARRAY_SIZE + 1);
         table = newMap;
-
+        // 拷贝每个Entry链表
         for (int i = oldCapacity ; i-- > 0 ;) {
             for (Entry<K,V> old = (Entry<K,V>)oldMap[i] ; old != null ; ) {
                 Entry<K,V> e = old;
                 old = old.next;
-
+                // 重新计算每个Entry链表的表头索引（rehash）
                 int index = (e.hash & 0x7FFFFFFF) % newCapacity;
+                // 开辟链表节点
                 e.next = (Entry<K,V>)newMap[index];
+                // 拷贝
                 newMap[index] = e;
             }
         }
     }
 
+    /**
+     * 当键值对个数超过阈值，先进行rehash然后添加entry，否则直接添加entry
+     */
     private void addEntry(int hash, K key, V value, int index) {
         modCount++;
 
@@ -1250,7 +1152,8 @@ public class Hashtable<K,V>
     }
 
     /**
-     * Hashtable bucket collision list entry
+     * Hashtable的Entry节点，它本质上是一个单向链表。
+     * 因此，我们能推断出Hashtable是由拉链法实现的散列表
      */
     private static class Entry<K,V> implements Map.Entry<K,V> {
         final int hash;
@@ -1281,6 +1184,7 @@ public class Hashtable<K,V>
             return value;
         }
 
+        // 进行判断value是否为空，即不允许value为空，其实key也不能为空
         public V setValue(V value) {
             if (value == null)
                 throw new NullPointerException();
@@ -1290,6 +1194,8 @@ public class Hashtable<K,V>
             return oldValue;
         }
 
+        // 覆盖equals()方法，判断两个Entry是否相等。
+        // 若两个Entry的key和value都相等，则认为它们相等。
         public boolean equals(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
@@ -1299,6 +1205,7 @@ public class Hashtable<K,V>
                (value==null ? e.getValue()==null : value.equals(e.getValue()));
         }
 
+        // 直接用hash进行异或，与HashMap不同
         public int hashCode() {
             return hash ^ Objects.hashCode(value);
         }
@@ -1314,29 +1221,26 @@ public class Hashtable<K,V>
     private static final int ENTRIES = 2;
 
     /**
-     * A hashtable enumerator class.  This class implements both the
-     * Enumeration and Iterator interfaces, but individual instances
-     * can be created with the Iterator methods disabled.  This is necessary
-     * to avoid unintentionally increasing the capabilities granted a user
-     * by passing an Enumeration.
+     * Enumerator的作用是提供了通过elements()遍历Hashtable的接口和通过entrySet()遍历Hashtable的接口。
+     * 因为，它同时实现了 Enumerator接口和Iterator接口。
      */
     private class Enumerator<T> implements Enumeration<T>, Iterator<T> {
+        // 指向Hashtable的table
         Entry<?,?>[] table = Hashtable.this.table;
+        // Hashtable的总的大小
         int index = table.length;
         Entry<?,?> entry;
         Entry<?,?> lastReturned;
         int type;
 
         /**
-         * Indicates whether this Enumerator is serving as an Iterator
-         * or an Enumeration.  (true -> Iterator).
+         * Enumerator是 迭代器(Iterator) 还是 枚举类(Enumeration)的标志
+         * iterator为true，表示它是迭代器；否则，是枚举类。
          */
         boolean iterator;
 
         /**
-         * The modCount value that the iterator believes that the backing
-         * Hashtable should have.  If this expectation is violated, the iterator
-         * has detected concurrent modification.
+         * 在将Enumerator当作迭代器使用时会用到，用来实现fail-fast机制。
          */
         protected int expectedModCount = modCount;
 
@@ -1345,6 +1249,9 @@ public class Hashtable<K,V>
             this.iterator = iterator;
         }
 
+        /**
+         * 从遍历table的数组的末尾向前查找，直到找到不为null的Entry。
+         */
         public boolean hasMoreElements() {
             Entry<?,?> e = entry;
             int i = index;
@@ -1358,6 +1265,12 @@ public class Hashtable<K,V>
             return e != null;
         }
 
+        /**
+         * 获取下一个元素
+         * 注意：从hasMoreElements() 和nextElement() 可以看出Hashtable的elements()遍历方式
+         * 首先，从后向前的遍历table数组。table数组的每个节点都是一个单向链表(Entry)。
+         * 然后，依次向后遍历单向链表Entry。
+         */
         @SuppressWarnings("unchecked")
         public T nextElement() {
             Entry<?,?> et = entry;
@@ -1377,17 +1290,23 @@ public class Hashtable<K,V>
             throw new NoSuchElementException("Hashtable Enumerator");
         }
 
-        // Iterator methods
+        // 迭代器Iterator的判断是否存在下一个元素
+        // 实际上，它是调用的hasMoreElements()
         public boolean hasNext() {
             return hasMoreElements();
         }
 
+        // 迭代器获取下一个元素
+        // 实际上，它是调用的nextElement()
         public T next() {
             if (modCount != expectedModCount)
                 throw new ConcurrentModificationException();
             return nextElement();
         }
 
+        // 迭代器的remove()接口。
+        // 首先，它在table数组中找出要删除元素所在的Entry，
+        // 然后，删除单向链表Entry中的元素。
         public void remove() {
             if (!iterator)
                 throw new UnsupportedOperationException();
@@ -1400,12 +1319,16 @@ public class Hashtable<K,V>
                 Entry<?,?>[] tab = Hashtable.this.table;
                 int index = (lastReturned.hash & 0x7FFFFFFF) % tab.length;
 
+                //获取该槽位第一个元素
                 @SuppressWarnings("unchecked")
                 Entry<K,V> e = (Entry<K,V>)tab[index];
+                //从单链表的一端向后遍历
                 for(Entry<K,V> prev = null; e != null; prev = e, e = e.next) {
+                    //当前元素即为上一个返回元素
                     if (e == lastReturned) {
                         modCount++;
                         expectedModCount++;
+                        //删除上一个元素
                         if (prev == null)
                             tab[index] = e.next;
                         else
